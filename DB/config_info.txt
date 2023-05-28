@@ -1,0 +1,10 @@
+~~~database name
+Echat_DB
+
+~~~~ collection
+User
+
+cOnnection string
+
+mongodb+srv://paraskhilosiya20:pccoeechat@cluster0.80tza2c.mongodb.net/Echat_DB?retryWrites=true&w=majority
+
