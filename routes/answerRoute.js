@@ -11,24 +11,20 @@ router.post("/addans/:userId/:queId", async (req, res) => {
     const { content } = req.body;
     const userId = req.params.userId;
 
-    // Create a new answer
     const answer = new Answer({
       content: content,
       user: userId,
       question: questionId,
     });
 
-    // Save the answer
     await answer.save();
 
-    // Add the answer to the question's answers array
     await Question.findByIdAndUpdate(
       questionId,
       { $push: { answers: answer._id } },
       { new: true }
     );
 
-    // Add the answer to the user's answers array
     await User.findByIdAndUpdate(
       userId,
       { $push: { answers: answer._id } },
@@ -71,6 +67,7 @@ router.delete("/delans/:answerId", async (req, res) => {
   }
 });
 
+//for updating ans
 router.put("/upans/:answerId", async (req, res) => {
   try {
     const { answerId } = req.params;
@@ -89,7 +86,58 @@ router.put("/upans/:answerId", async (req, res) => {
   }
 });
 
-// for updating answer
+//for keeping posting user who likes particular ans
+// Route to add a like to an answer
+router.post("/:userId/:answerId/like", async (req, res) => {
+  try {
+    const answer = await Answer.findById(req.params.answerId);
+
+    if (!answer) {
+      return res.status(404).json({ message: "Answer not found" });
+    }
+
+    // Check if the user has already liked the answer
+    if (answer.usersWhoLike.includes(req.params.userId)) {
+      return res
+        .status(400)
+        .json({ message: "You have already liked this answer" });
+    }
+
+    answer.usersWhoLike.push(req.params.userId);
+    answer.save();
+
+    res.json({ message: "Answer liked successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Route to get the number of likes and users who like an answer
+router.get("/:answerId/like", async (req, res) => {
+  try {
+    const answer = await Answer.findById(req.params.answerId).populate(
+      "usersWhoLike",
+      "firstName lastName"
+    ); // Populate user fields for usersWhoLike
+
+    if (!answer) {
+      return res.status(404).json({ message: "Answer not found" });
+    }
+
+    const likesCount = answer.usersWhoLike.length;
+
+    res.json({
+      likesCount,
+      usersWhoLike: answer.usersWhoLike,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// trial
 router.get("/", (req, res) => {
   res.send("HELLo Answer");
 });
